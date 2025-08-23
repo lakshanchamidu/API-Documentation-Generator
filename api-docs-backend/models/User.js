@@ -1,19 +1,19 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-const userSchema = new mongoose(
+const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, "Name is required."],
+      required: [true, "Name is required"],
       trim: true,
-      minLength: [2, "Name must be at least 2 characters."],
-      maxLenght: [50, "Name cannot exceed 50 characters."],
+      minlength: [2, "Name must be at least 2 characters"], // Fix: minlength (not minLength)
+      maxlength: [50, "Name cannot exceed 50 characters"], // Fix: maxlength (not maxLenght)
     },
     email: {
       type: String,
       unique: true,
-      required: [true, "Email is required."],
+      required: [true, "Email is required"],
       lowercase: true,
       trim: true,
       match: [
@@ -23,8 +23,8 @@ const userSchema = new mongoose(
     },
     password: {
       type: String,
-      required: [true, "Password is required."],
-      minLength: [6, "Password must be at least 6 characters."],
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters"], // Fix: minlength
     },
     avatar: {
       type: String,
@@ -32,7 +32,7 @@ const userSchema = new mongoose(
     },
     subscription: {
       type: String,
-      enum: ["free", "pro", "enterprises"],
+      enum: ["free", "pro", "enterprise"], // Fix: enterprise (not enterprises)
       default: "free",
     },
     isActive: {
@@ -49,6 +49,7 @@ const userSchema = new mongoose(
   }
 );
 
+// Hash password before saving
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   try {
@@ -60,6 +61,7 @@ userSchema.pre("save", async function (next) {
   }
 });
 
+// Instance method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword) {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
@@ -68,14 +70,16 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   }
 };
 
+// Instance method to get public profile
 userSchema.methods.getPublicProfile = function () {
   const user = this.toObject();
   delete user.password;
   return user;
 };
 
-userSchema.methods.findByEmail = function (email) {
-  return this.findOne({ email: email.toLoweCase() });
+// Fix: Static method to find by email (not instance method)
+userSchema.statics.findByEmail = function (email) {
+  return this.findOne({ email: email.toLowerCase() }); // Fix: toLowerCase (not toLoweCase)
 };
 
 module.exports = mongoose.model("User", userSchema);
